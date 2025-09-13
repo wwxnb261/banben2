@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>考研英语作文批改系统</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- 考试说明界面 -->
+    <div id="exam-instructions" class="screen active">
+        <div class="modal-overlay">
+            <div class="modal-content">
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+                <h2>考试说明</h2>
+                <div class="exam-info">
+                    <div class="exam-detail">
+                        <span class="label">考试科目：</span>
+                        <span class="value">考研英语1-小作文</span>
+                    </div>
+                    <div class="exam-detail">
+                        <span class="label">考试时长：</span>
+                        <span class="value">15-35分钟</span>
+                    </div>
+                </div>
+                <div class="instructions">
+                    <ol>
+                        <li>点击"开始考试"，开始计时，中途退出，草稿不会保留</li>
+                        <li>如有需要，可在右下角修改"考试类型"</li>
+                        <li>写作完成后，点击"交卷"，查看考试成绩</li>
+                    </ol>
+                </div>
+                <div class="mode-switch">
+                    <button id="free-mode-btn" class="mode-btn" onclick="switchMode('free')">切换为自由写作模式</button>
+                </div>
+                <button class="start-btn" onclick="startExam()">开始考试</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 写作界面 -->
+    <div id="writing-screen" class="screen">
+        <div class="header">
+            <div class="timer-section">
+                <span class="timer-icon">⏰</span>
+                <span class="label">用时:</span>
+                <span id="timer">00:00:01</span>
+            </div>
+            <div class="word-count">
+                <span class="label">词数:</span>
+                <span id="word-count">0</span>
+            </div>
+            <div class="exam-type">
+                <span class="label">考试类型:</span>
+                <select id="exam-type-select">
+                    <option value="graduate_a1">考研1-小作文</option>
+                    <option value="graduate_b1">考研1-大作文</option>
+                    <option value="graduate_a2">考研2-小作文</option>
+                    <option value="graduate_b2">考研2-大作文</option>
+                </select>
+            </div>
+            <button id="submit-btn" class="submit-btn" onclick="submitEssay()">交卷</button>
+        </div>
+
+        <div class="writing-area">
+            <div class="input-section">
+                <div class="title-input">
+                    <input type="text" id="essay-title" placeholder="Type your title here" class="title-field">
+                </div>
+                <div class="content-input">
+                    <textarea id="essay-content" placeholder="Type or paste (Ctrl+V) your text here." class="content-field"></textarea>
+                </div>
+                <div class="upload-section">
+                    <div class="upload-options">
+                        <button class="upload-btn" onclick="openCamera()">📷 拍照上传</button>
+                        <button class="upload-btn" onclick="openFileUpload()">📁 上传图片</button>
+                        <input type="file" id="file-input" accept="image/*" style="display: none;" onchange="handleFileUpload(event)">
+                    </div>
+                    <div id="image-preview" class="image-preview" style="display: none;">
+                        <img id="preview-img" src="" alt="预览图片">
+                        <button class="remove-img-btn" onclick="removeImage()">&times;</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="analysis-section">
+                <div class="analysis-header">
+                    <h3>专业级语法纠错评分，母语级润色推荐</h3>
+                    <div class="analysis-tags">
+                        <span class="tag">包含 语法纠错</span>
+                        <span class="tag">复合词汇</span>
+                        <span class="tag">词汇润色</span>
+                        <span class="tag">句子润色</span>
+                        <span class="tag">修辞润色</span>
+                    </div>
+                </div>
+                <div class="score-display">
+                    <div class="score-circle">
+                        <div class="score-number" id="total-score">0</div>
+                        <div class="score-label">分</div>
+                        <div class="score-total">总分100分</div>
+                    </div>
+                    <div class="score-breakdown">
+                        <div class="score-item">
+                            <span class="score-category">所有纠错</span>
+                            <span class="score-count" id="error-count">0</span>
+                        </div>
+                        <div class="score-item">
+                            <span class="score-category">基础纠错</span>
+                            <span class="score-count" id="basic-error-count">0</span>
+                        </div>
+                        <div class="score-item">
+                            <span class="score-category">高级纠错</span>
+                            <span class="score-count" id="advanced-error-count">0</span>
+                        </div>
+                        <div class="score-item">
+                            <span class="score-category">句子润色</span>
+                            <span class="score-count" id="polish-count">0</span>
+                        </div>
+                        <div class="score-item">
+                            <span class="score-category">权威例句</span>
+                            <span class="score-count" id="example-count">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 摄像头模态框 -->
+        <div id="camera-modal" class="modal" style="display: none;">
+            <div class="modal-content camera-modal-content">
+                <div class="modal-header">
+                    <h3>拍照上传</h3>
+                    <button class="close-btn" onclick="closeCamera()">&times;</button>
+                </div>
+                <div class="camera-container">
+                    <video id="camera-video" autoplay></video>
+                    <canvas id="camera-canvas" style="display: none;"></canvas>
+                </div>
+                <div class="camera-controls">
+                    <button class="camera-btn" onclick="capturePhoto()">📷 拍照</button>
+                    <button class="camera-btn" onclick="closeCamera()">取消</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 结果展示界面 -->
+    <div id="result-screen" class="screen">
+        <div class="result-header">
+            <h2>写作报告</h2>
+            <div class="exam-type-display">
+                <span id="result-exam-type">考研1 - 大作文</span>
+            </div>
+            <button class="close-result-btn" onclick="backToWriting()">&times;</button>
+        </div>
+        
+        <div class="result-content">
+            <div class="score-summary">
+                <div class="main-score">
+                    <span class="score-large" id="result-score">87</span>
+                    <span class="score-total-text">/ 20分</span>
+                </div>
+                
+                <div class="score-details">
+                    <div class="score-section">
+                        <h4>基础数据</h4>
+                        <div class="score-grid">
+                            <div class="score-item">
+                                <span class="label">词汇数量</span>
+                                <span class="value" id="result-word-count">253</span>
+                            </div>
+                            <div class="score-item">
+                                <span class="label">字符数量</span>
+                                <span class="value" id="result-char-count">1477</span>
+                            </div>
+                            <div class="score-item">
+                                <span class="label">句子数量</span>
+                                <span class="value" id="result-sent-count">16</span>
+                            </div>
+                            <div class="score-item">
+                                <span class="label">段落数量</span>
+                                <span class="value" id="result-para-count">3</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="score-section">
+                        <h4>语法错误</h4>
+                        <div class="score-grid">
+                            <div class="score-item">
+                                <span class="label">语法错误数量</span>
+                                <span class="value" id="result-grammar-errors">13</span>
+                            </div>
+                            <div class="score-item">
+                                <span class="label">高级语法错误</span>
+                                <span class="value highlight" id="result-advanced-errors">大小写不统一</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="detailed-feedback">
+                <h4>综合评价</h4>
+                <div class="feedback-item">
+                    <div class="feedback-category">
+                        <span class="category-icon">📝</span>
+                        <span class="category-name">语法</span>
+                        <span class="category-score">★★★★☆</span>
+                    </div>
+                    <p class="feedback-text" id="grammar-feedback">使用简单句式过多，可尝试使用复杂句式，可尝试使用！</p>
+                </div>
+                
+                <div class="feedback-item">
+                    <div class="feedback-category">
+                        <span class="category-icon">📚</span>
+                        <span class="category-name">词汇</span>
+                        <span class="category-score">★★★★☆</span>
+                    </div>
+                    <p class="feedback-text" id="vocabulary-feedback">单词拼写与语法出现错误，或无语法，词汇量不够，用词准确！</p>
+                </div>
+                
+                <div class="feedback-item">
+                    <div class="feedback-category">
+                        <span class="category-icon">🔗</span>
+                        <span class="category-name">结构</span>
+                        <span class="category-score">★★★★★</span>
+                    </div>
+                    <p class="feedback-text" id="structure-feedback">能够灵活使用多种句式手法，超厉害！</p>
+                </div>
+            </div>
+            
+            <div class="detailed-report">
+                <h4>详细报告 <span class="vip-badge">VIP</span></h4>
+                <div class="report-content" id="detailed-report-content">
+                    <!-- 详细报告内容将通过JavaScript动态生成 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

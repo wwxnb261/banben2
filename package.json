@@ -1,0 +1,27 @@
+{
+  "name": "english-essay-correction",
+  "version": "1.0.0",
+  "description": "英语考研作文图片识别批改应用",
+  "main": "index.html",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'Static site - no build needed'",
+    "start": "vercel dev"
+  },
+  "keywords": [
+    "english",
+    "essay",
+    "correction",
+    "image",
+    "recognition",
+    "vercel"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "devDependencies": {
+    "vercel": "^33.0.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
